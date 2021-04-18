@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <!-- what would be a good code styling practice for aframe? -->
+    <style type="text/css">
+        a-scene {
+            height: 300px;
+            width: 600px;
+        }
+    </style>
+    <a-scene embedded>
+
+        <script type="text/javascript">
+            
+            AFRAME.registerComponent('magic-laser', {
+              dependencies: ['raycaster'],
+                init: function () {
+                    this.el.addEventListener('raycaster-intersection', function () {
+                        console.log('Player hit something!');
+                    });
+                }
+            });
+
+            AFRAME.registerComponent('magic-target', {
+                // is the dependencies needed here or not?
+                dependencies: ['raycaster'],
+                init: function () {
+                    this.el.addEventListener('raycaster-intersection', function () {
+                        console.log('AAARHHRHG!');
+                    });
+                },
+                clicked: function () {
+                    ;
+                    // increase counter value
+                }
+                // delete: function () {
+                //     ;
+                //     // TODO: tell database to also delete its version of this? maybe have the laser handle that part
+                // }
+            });
+
+
+        // EXPERIMENTAL (UX warning !!) 
+        // first click starts movement, second click stops movement
+        AFRAME.registerComponent('click-to-reposition', {
+            init: function() {
+                this.active = false;
+                this.pos = this.el.object3D.position;
+                this.pos_start = new THREE.Vector3();
+
+                this.clicker_start = new THREE.Vector3();
+                this.clicker_pos = new THREE.Vector3();
+                this.clickerEl = undefined;
+
+                this.el.addEventListener('click', (e) => {
+                  this.active = !this.active;
+                  if(this.active) {
+                    this.clickerEl = e.detail.cursorEl;
+                    this.clickerEl.object3D.getWorldPosition(this.clicker_start)
+                    this.pos_start.copy(this.el.object3D.position)
+                  }
+                })
+            },
+            tick: function() {
+                if(this.active) {
+                    this.drag();
+                }
+            },
+            grab: function(e) {
+                this.active = !this.active;
+                if(this.active) {
+                    this.clickerEl = e.detail.cursorEl;
+                    this.clickerEl.object3D.getWorldPosition(this.clicker_start)
+                    this.pos_start.copy(this.el.object3D.position)
+                }
+            },
+            drag: function() {
+                this.clickerEl.object3D.getWorldPosition(this.clicker_pos)
+                this.pos.copy(this.pos_start).add(this.clicker_pos).sub(this.clicker_start)
+            },
+            drop: function(e) {
+                console.log("dropped!")
+            }
+        });
+
+        </script>
+
+        <!-- wasd user -->
+        <a-entity id="camera-wrapper">
+            <a-camera look-controls="pointerLockEnabled: true" near="0.001" wasd-controls>
+                <a-cylinder id="laser-pointer" position="0.2 -0.4 -0.9" radius="0.01" height= "1.0" rotation="90 0 0" color="beige" opacity="1.0"></a-cylinder>
+                <a-entity position="0.2 -0.4 -1.4" cursor="rayOrigin: entity; showLine: true;" raycaster="objects: .clickable; showLine: true; far: 16" line="color: white; opacity:0.5"></a-entity>
+            </a-camera>
+        </a-entity>
+
+        <!-- clickable target -->
+        <a-box class="clickable" magic-target click-to-reposition position="-1 0.5 -3" rotation="0 45 0" color="#5aa27c"></a-box>
+
+        <!-- default boilerplate -->
+        <a-entity position="0 0 -10">
+            <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
+            <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+            <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+            <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+            <a-sky color="#ECECEC"></a-sky>
+        </a-entity>
+
+
+
+        <!-- CRUD GUN -->
+        <a-entity position="0 1.5 -5" rotation="0 45 0">
+            <a-text position="-0.019 0 -0.05" rotation="0 -90 0" scale="0.09 0.1 0.1" value="CRUD GUN" ></a-text>
+            <a-box width="0.038" height="0.038" depth="0.100" color="#FF6700"></a-box>
+            <a-box width="0.031" height="0.031" depth="0.038" color="#FF6700" position="0 -0.0345 0.031"></a-box>
+            <a-box position="0 0.024 -0.045" width="0.01" height="0.01" depth="0.01" color="#FF3300"></a-box>
+            <a-box position="0.0075 0.024 0.045" width="0.01" height="0.01" depth="0.01" color="#AA3333"></a-box>
+            <a-box position="-0.0075 0.024 0.045" width="0.01" height="0.01" depth="0.01" color="#AA3333"></a-box>
+        </a-entity>
+
+        <!-- <a-entity id="player" collider-check>
+          <a-entity raycaster="objects: .collidable" position="0 -0.9 0" rotation="90 0 0"></a-entity>
+        </a-entity>
+        <a-entity class="collidable" geometry="primitive: box" position="1 0 0"></a-entity> -->
+    </a-scene>
+
+    <!-- TODO: do the API stuff outside forms  -->
+    <h2>Create Entry:</h2>
+    <form action="/initMagicValue" method="POST">
+        <!-- show values here -->
+        <input type="submit" name="" value="New Entry">
+    </form>
+
+    <h1>Current Entries</h1>
+    <ol>
+        <% for(let i=0; i < magic.length; i++) {%>
+            <li>
+                <span><%= JSON.stringify(magic[i]) %></span>
+            </li>
+        <% } %>
+    </ol>
+
+    <h2>Update Entry ("x" position)</h2>
+    <form action="/updateMagicValue" method="POST">
+        <input type="text" placeholder="_id" name="_id">
+        <!-- todo: disable rest of form until _id is filled out  -->
+        <input type="text" placeholder="x" name="_id">
+        <input type="submit" name="">
+    </form>
+
+
+    <h2>Delete Entry</h2>
+    <!-- disable form suggestions -->
+    <!-- <form action="/deleteMagic/:id" method="DELETE"> -->
+    <section>
+        <input id="magic-delete-target" type="text" placeholder="_id" name="wut">
+        <button onclick="deleteMagic()">Delete</button>
+        <!-- <script type="text/javascript">
+            const target = document.querySelector("#magic-delete-target");
+            document.querySelector("#magic-delete-button").onclick = event => {
+                console.log('woo', target.value)
+            };
+        </script> -->
+    </section>
+    
+    <script src='js/main.js'></script>
+</body>
+</html>

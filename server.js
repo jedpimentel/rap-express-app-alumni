@@ -28,9 +28,12 @@ app.use(express.json())
 
 
 app.get('/', (request, response) => {
+    response.render('index.ejs')
+})
+app.get('/rappers', (request, response) => {
     db.collection('rappers').find().sort({likes: -1}).toArray()
     .then(data => {
-        response.render('index.ejs', { info: data })
+        response.render('rappers.ejs', { info: data })
     })
     .catch(error => console.error(error))
 })
@@ -38,7 +41,7 @@ app.get('/magic', (request, response) => {
     console.log('/magic')
     db.collection('magic').find().toArray()
     .then(data => {
-        response.render('index.ejs', { magic: data, info: [] })
+        response.render('magic.ejs', { magic: data, info: [] })
     })
     .catch(error => console.error(error))
 })
@@ -63,7 +66,7 @@ app.post('/addRapper', (request, response) => {
     birthName: request.body.birthName, likes: 0})
     .then(result => {
         console.log('Rapper Added')
-        response.redirect('/')
+        response.redirect('back')
     })
     .catch(error => console.error(error))
 })
