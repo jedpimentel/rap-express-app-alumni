@@ -59,7 +59,7 @@
             });
 
 
-        // EXPERIMENTAL (UX warning !!) 
+        // EXPERIMENTAL (UX warning, could use refactoring/optimization) 
         // first click starts movement, second click stops movement
         AFRAME.registerComponent('click-to-reposition', {
             init: function() {
@@ -77,6 +77,9 @@
                     this.clickerEl = e.detail.cursorEl;
                     this.clickerEl.object3D.getWorldPosition(this.clicker_start)
                     this.pos_start.copy(this.el.object3D.position)
+                  }
+                  else {
+                    this.drop();
                   }
                 })
             },
@@ -99,7 +102,57 @@
             },
             drop: function(e) {
                 console.log("dropped!")
-            }
+                this.savePosition();
+            },
+            savePosition: function(e) {
+                // TODO: check/sanitize dependancy chain
+                // should be okay to justg limit user from entering scene, or limiting functionalities until everything is loaded
+                this.updateMagic(this.el);//✨
+            },
+            updateMagic(e) {
+                // placeholder method, currently 
+                updateMagic(e);
+                // moved this out of main.js 
+                // TODO: move all this stuff into its own .js file
+                // Sorry for this mess, had trouble sleeping
+                async function updateMagic(entity){
+
+                    const position = `${entity.object3D.position.x} ${entity.object3D.position.y} ${entity.object3D.position.z}`
+                    const rotation = `${entity.object3D.rotation.x} ${entity.object3D.rotation.y} ${entity.object3D.rotation.z}`
+
+
+                    // const
+                    // console.log('yes', entity)
+                    // console.log(this)
+                    // console.log(entity.object3D.quaternion);
+                    const quaternion = entity.object3D.quaternion;
+                    console.log('updating id', entity.id)
+                    try{
+                        const response = await fetch('updateMagic', {
+                            method: 'put',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                              'id': entity.id,
+                              // 'object3D': entity.object3D,
+                              'position': position,
+                              'rotation': rotation,
+                              // 'wxyz': [
+                              //   quaternion.w, 
+                              //   quaternion.x, 
+                              //   quaternion.y, 
+                              //   quaternion.z
+                              // ]
+                            })
+                          })
+                        const data = await response.json()
+                        console.log(data)
+                        location.reload()
+
+                    }catch(err){
+                        console.error(err)
+                    }
+                }
+            },
         });
 
         </script>
@@ -113,7 +166,22 @@
         </a-entity>
 
         <!-- clickable target -->
-        <a-box class="clickable" magic-target click-to-reposition position="-1 0.5 -3" rotation="0 45 0" color="#5aa27c"></a-box>
+        <a-box  class="clickable" magic-target click-to-reposition position="-1 0.5 -3" rotation="0 45 0" color="#5aa27c"></a-box>
+
+        <!-- not sure if it'll work to contain this in an entity  -->
+        <!-- everything is a box for now -->
+        <!-- quaternions should be more efficient than position+rotation -->
+        <!-- but I'm not sure if express handles it well -->
+        <!-- saving positions and rotations as strings is inneficient -->
+        <!-- better to work on quaternions than a robust pos/rot implementation? -->
+        <!-- why are these boxes showing up as having the raycaster component? Do targets also get it? -->
+        <% for(let i=0; i < magic.length; i++) {%>
+            <a-box class="clickable" magic-target click-to-reposition 
+                id="<%= magic[i]._id %>" 
+                position="<%= magic[i].position %>" 
+                rotation="<%= magic[i].rotation %>"    
+            ></a-box>
+        <% } %>
 
         <!-- default boilerplate -->
         <a-entity position="0 0 -10">
@@ -159,7 +227,7 @@
     </ol>
 
     <h2>Update Entry ("x" position)</h2>
-    <form action="/updateMagicValue" method="POST">
+    <form action="/updateMagic" method="POST">
         <input type="text" placeholder="_id" name="_id">
         <!-- todo: disable rest of form until _id is filled out  -->
         <input type="text" placeholder="x" name="_id">

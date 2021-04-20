@@ -53,26 +53,6 @@ async function addLike(){
     }
 }
 
-async function updateMagic(){
-    // const
-    try{
-        const response = await fetch('addOneLike', {
-            method: 'put',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              'stageNameS': sName,
-              'birthNameS': bName,
-              'likesS': tLikes
-            })
-          })
-        const data = await response.json()
-        console.log(data)
-        location.reload()
-
-    }catch(err){
-        console.log(err)
-    }
-}
 
 async function deleteMagic(){
     console.log('magic deletion attempt', this)

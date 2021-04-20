@@ -37,29 +37,6 @@ app.get('/rappers', (request, response) => {
     })
     .catch(error => console.error(error))
 })
-app.get('/magic', (request, response) => {
-    console.log('/magic')
-    db.collection('magic').find().toArray()
-    .then(data => {
-        response.render('magic.ejs', { magic: data, info: [] })
-    })
-    .catch(error => console.error(error))
-})
-
-// TODO: alert if deletion target doesn't exist
-app.delete('/deleteMagic', (request, response) => {
-    console.log('W00t')
-    console.log(request.body)
-    const targetID = new ObjectID(request.body.id);
-    console.log(targetID)
-    // ObjectId("507c35dd8fada716c89d0013")
-    db.collection('magic').deleteOne({_id: targetID})
-    .then(result => {
-        console.log('Magic Deleted')
-        response.json('Magic Deleted')
-    })
-    .catch(error => console.error(error))
-})
 
 app.post('/addRapper', (request, response) => {
     db.collection('rappers').insertOne({stageName: request.body.stageName,
@@ -98,46 +75,76 @@ app.delete('/deleteRapper', (request, response) => {
 
 })
 
-// app.delete('/deleteMagic', (request, response) => {
-//     console.log(request)
-//     // ObjectId("507c35dd8fada716c89d0013")
-//     db.collection('magic').deleteOne({number: "number"})
-//     .then(result => {
-//         console.log('Magic Deleted')
-//         response.json('Magic Deleted')
 
-//         // response.redirect('/magic')
-//     })
-//     .catch(error => console.error(error))
-// })
+app.get('/magic', (request, response) => {
+    console.log('/magic')
+    db.collection('magic').find().toArray()
+    .then(data => {
+        response.render('magic.ejs', { magic: data, info: [] })
+    })
+    .catch(error => console.error(error))
+})
+
+// TODO: alert if deletion target doesn't exist
+app.delete('/deleteMagic', (request, response) => {
+    console.log('W00t')
+    console.log(request.body)
+    const targetID = new ObjectID(request.body.id);
+    console.log(targetID)
+    // ObjectId("507c35dd8fada716c89d0013")
+    db.collection('magic').deleteOne({_id: targetID})
+    .then(result => {
+        console.log('Magic Deleted')
+        response.json('Magic Deleted')
+    })
+    .catch(error => console.error(error))
+})
 
 // TODO: get initial position from request
 app.post('/initMagicValue', (request, response) => {
     db.collection('magic')
     .insertOne({
         value: 0,
-        object3D: {
-            position: [0, 0, 0],
-            rotation: [0, 0, 0]
-        }
+        // object3D: {
+        //     position: [0, 0, 0],
+        //     rotation: [0, 0, 0]
+        // }
+        // seriously, strings like this aren't optimal
+        position: "0 0 0",
+        rotation: "0 0 0",
     })
     .then(result => {
-        console.log("Magic Position/Rotation reset!");
-        // TODO: UPDATE FRONTEND
+        // TODO: UPDATE FRONTEND AS A SINGLE PAGE APP
         response.redirect('/magic')
-        // response.json('what does response.json do?')// frontened showed (navigated to?) that text
     })
     .catch(error => console.error(error))
 })
-app.put('/updateMagicValue', (request, response) => {
-    ObjectID
-    const new_x = 2;
+app.put('/updateMagic', (request, response) => {
+    const id = request.body.id;
+    console.log(id);
+    console.log(request.body)
+    if (!id) throw "/updateMagic needs an ID";
+    const targetID = new ObjectID(request.body.id);
+    // ???: how much better is it to save position+rotation as an array?
+    // maybe not the best idea to have the IDs viewable in the inspector 
+    // const object3D = request.body.object3D;
+    // const wxyz = request.body.wxyz;
+    // const new_x = 2;
     db.collection('magic').updateOne(
-        {_id: 'number', value: 0}
-
+        {_id: targetID},
+        {
+            $set: {
+                // wxyz: wxyz
+                position: request.body.position,
+                rotation: request.body.rotation,
+                wut: 'wut',
+            }
+        }
     )
     .then(result => {
-        response.redirect('/magic')
+        // Don't redirect
+        console.log('update', result)
+        // response.redirect('/magic')
     })
     .catch(error => console.error(error))
 })
