@@ -11,7 +11,11 @@ let db,
     dbName = 'rap'
 
 console.log('attempting db connection', process.env.DB_STRING)
-MongoClient.connect(dbConnectionStr, { useUnifiedTopology: true })
+MongoClient
+    .connect(dbConnectionStr, { 
+        useNewUrlParser: true,
+        useUnifiedTopology: true 
+    })
     .then(client => {
         console.log(`Connected to ${dbName} Database`)
         db = client.db(dbName)
