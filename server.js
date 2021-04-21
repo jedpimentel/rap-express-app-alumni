@@ -19,6 +19,11 @@ MongoClient
     .then(client => {
         console.log(`Connected to ${dbName} Database`)
         db = client.db(dbName)
+
+        
+        app.listen(process.env.PORT || PORT, ()=>{
+            console.log(`Server running on port ${PORT}`)
+        })
     })
     .catch(e => {
         console.log('failed to connect')
@@ -180,6 +185,6 @@ app.put('/increaseMagicNumber', (request, response) => {
 })
 
 
-app.listen(process.env.PORT || PORT, ()=>{
-    console.log(`Server running on port ${PORT}`)
-})
+// app.listen(process.env.PORT || PORT, ()=>{
+//     console.log(`Server running on port ${PORT}`)
+// })
