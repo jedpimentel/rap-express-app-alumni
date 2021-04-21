@@ -10,7 +10,7 @@ let db,
     dbConnectionStr = process.env.DB_STRING,
     dbName = 'rap'
 
-console.log('attempting db connection')
+console.log('attempting db connection', process.env.DB_STRING)
 MongoClient.connect(dbConnectionStr, { useUnifiedTopology: true })
     .then(client => {
         console.log(`Connected to ${dbName} Database`)
