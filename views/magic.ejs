@@ -25,7 +25,7 @@
     <style type="text/css">
         a-scene {
             height: 300px;
-            width: 600px;
+            max-width: 600px;
         }
     </style>
     <a-scene embedded vr-mode-ui="enabled: false">
@@ -215,9 +215,11 @@
                 this.clickerEl = undefined;
 
                 this.el.addEventListener('click', (e) => {
+                    console.log(e)
                   this.active = !this.active;
                   if(this.active) {
                     this.clickerEl = e.detail.cursorEl;
+                    console.log(this.clickerEl)
                     this.clickerEl.object3D.getWorldPosition(this.clicker_start)
                     this.pos_start.copy(this.el.object3D.position)
                   }
@@ -365,10 +367,38 @@
         }
     </style>
     <script type="text/javascript">
-        const raycaster = document.querySelector("#laser-ray")
+        const raycaster = document.querySelector("#laser-ray").components.raycaster
         document.querySelector("#clicker").onclick = function() {
             console.log('yo', raycaster)
-            raycaster.click();
+            // raycaster.click();
+            document.querySelector("#laser-ray").components.cursor
+            const intersected = raycaster.intersectedEls
+            if (intersected[0]) {
+                simulateClick(intersected[0])
+                // console.log(intersected[0])
+                // intersected[0].components["click-to-reposition"].onclick.apply(document.querySelector("#laser-ray"))
+            }
+        }
+        // e.detail.cursorEl
+        function simulateClick(el) {
+          const event = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            detail: {
+                cursorEl: document.querySelector('#laser-ray')
+            }
+          });
+          // const cb = document.getElementById('checkbox');
+          const cancelled = !el.dispatchEvent(event);
+
+          if (cancelled) {
+            // A handler called preventDefault.
+            // alert("cancelled");
+          } else {
+            // None of the handlers called preventDefault.
+            // alert("not cancelled");
+          }
         }
     </script>
 
