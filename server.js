@@ -10,7 +10,7 @@ let db,
     dbConnectionStr = process.env.DB_STRING,
     dbName = 'rap'
 
-console.log('attempting db connection', process.env.DB_STRING)
+// console.log('attempting db connection', process.env.DB_STRING)
 MongoClient
     .connect(dbConnectionStr, { 
         useNewUrlParser: true,
@@ -19,7 +19,6 @@ MongoClient
     .then(client => {
         console.log(`Connected to ${dbName} Database`)
         db = client.db(dbName)
-
         
         app.listen(process.env.PORT || PORT, ()=>{
             console.log(`Server running on port ${PORT}`)
@@ -28,7 +27,13 @@ MongoClient
     .catch(e => {
         console.log('failed to connect')
         console.log(e)
-        //add fallback?
+        const fallback = express();
+        fallback.get('/', (request, response) => {
+            response.json('Server is taking a break.')
+        })
+        fallback.listen(process.env.PORT || PORT, ()=>{
+            console.log(`Fallback server running on port ${PORT}`)
+        })
     })
     
 app.set('view engine', 'ejs')
