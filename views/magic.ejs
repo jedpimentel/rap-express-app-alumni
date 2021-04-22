@@ -7,6 +7,7 @@
     <title>Document</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://yoannmoinet.github.io/nipplejs/javascripts/nipplejs.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -27,18 +28,160 @@
             width: 600px;
         }
     </style>
-    <a-scene embedded>
+    <a-scene embedded vr-mode-ui="enabled: false">
+
+        <!-- analog movement stuff -->
+        <script type="text/javascript">
+            AFRAME.registerComponent('follow-camera', {
+                // attaches thing to camera position, but not rotation
+                // wasd controls was making this move glitchily, but became smothe if tabbing out and in again
+                schema: {
+                    camID: {type: 'string'}
+                },
+                init: function() {
+
+                    this.camera = document.querySelector(`#${this.data.camID}`)
+                    if (!this.camera) throw `error, could not find "#${this.data.camID}"`
+
+                },
+                tick: function() {
+                    this.el.object3D.position.copy(this.camera.object3D.position)
+                    this.el.object3D.rotation.y = this.camera.object3D.rotation.y
+                }
+            });
+
+            // zoidberg zardbarg
+            AFRAME.registerSystem('analog-input-handler-test', {
+                // STATE: keep internal to touch-controls.html, 
+                // resolve forward/flatForward naming convention, keep both modes under a flag?
+                // is it okay to move the camera itself instead of wrapper? (prob not)
+                // how about rotating the wrapper versus the camera itself?
+                schema: {},
+                foo: () => console.log('bar'),
+                init: function () {
+                    this._active = false;
+                    this._direction = new THREE.Vector2(0, 0);
+                    document.addEventListener('DOMContentLoaded', (event) => {
+                        this.camwrapper = document.querySelector('#camera-wrapper');
+                        this.camera = document.querySelector('#camera-actual');
+
+                        // ADD UI TO THE DOM
+                        const span = document.createElement('span');
+                        // no need to make a div in a div
+                        span.innerHTML = `
+                            <div id="overlay">
+                                <p>use this touch-pad to move around</p>
+                            </div>
+                        `;
+                        document.querySelector('#analog').appendChild(span);
+
+                        const style = document.createElement('style');
+                        style.innerHTML = `
+                            #overlay {
+                                // position:absolute;
+
+                                display: inline-block;
+                                bottom:0px;
+                                left:0px;
+                                z-index:1000;
+                                background-color: gray;
+
+                                height: 200px;
+                                width: 200px;
+                                margin: 50px
+                            }
+                        `;
+                        document.head.appendChild(style);
+
+                        // avoid accessing properties before initialized,
+                        // might be goood to have system methhoods/props check
+                        // if system has been fully initialized/loaded, defined
+                        // as having camwrapper and all dependencies already be initialized
+                        this.cWrapPos = this.camwrapper.object3D.position;
+
+
+                        // https://nunustudio.org/learn/basics/14_joystick/page.html
+                        inputHandler = document.querySelector('a-scene').systems['analog-input-handler-test'];
+                        
+                        // direction = new THREE.Vector2(0, 0);
+
+                        const manager = nipplejs.create({
+                            zone: document.getElementById('overlay'),
+                            color: 'blue'
+                        });
+
+                        // setInterval(function(){
+                        //     if(this._active) {
+                        //         inputHandler.move(this._direction.y, this._direction.x)
+                        //     }
+                        // }, 1000 / 90);
+
+                        manager.on("added", (event, nipple) => {
+                            nipple.on("start", (event, data) => {
+                                this._active = true;
+                            });
+                            nipple.on("move", (event, data) => {
+                                const force = 0.08 * data.force;
+                                this._direction.x = Math.cos(data.angle.radian) * force;
+                                this._direction.y = Math.sin(data.angle.radian) * force;
+                            });
+                            nipple.on("end", (event, data) => {
+                                speed = 0
+                                this._active = false;
+                            });
+                        });
+                        manager.on("removed", (event, nipple) => {
+                            nipple.off("move start end");
+                        });
+                    });
+
+                    // this.heading = new THREE.Vector3()
+                },
+
+                move: function (forward, rightward) {
+                    const yRot = this.camera.object3D.rotation.y;
+                    this.cWrapPos.z += rightward *  Math.sin(-yRot) - forward * Math.cos(yRot);
+                    this.cWrapPos.x += rightward *  Math.cos(-yRot) - forward * Math.sin(yRot);
+
+                },
+
+                // // TODO: Remove "forward" and "rightward" stuff, document "alt version" in a vlog post
+                // forward: function (value) {
+                //     //!! maybe not stable, see: Quaternions
+                //     // https://threejs.org/docs/#api/en/math/Quaternion
+                //     const yRot = this.camera.object3D.rotation.y 
+                //     this.cWrapPos.z -= (value * Math.cos(yRot));
+                //     this.cWrapPos.x -= (value * Math.sin(yRot));
+                    
+                //     // {// alt version, move slower if looking down
+                //     //     this.camera.object3D.getWorldDirection(this.heading);
+                //     //     this.camwrapper.object3D.position.x -= this.heading.x * value
+                //     //     this.camwrapper.object3D.position.z -= this.heading.z * value
+                //     // }
+                // },
+                // rightward: function (value) {
+                //     const yRot = this.camera.object3D.rotation.y 
+                //     this.cWrapPos.z += (value * Math.sin(-yRot));
+                //     this.cWrapPos.x += (value * Math.cos(-yRot));
+                // },
+                tick: function () {                    
+                    if(this._active) {
+                        this.move(this._direction.y, this._direction.x)
+                    }
+                },
+            })
+        </script>
 
         <script type="text/javascript">
             
-            AFRAME.registerComponent('magic-laser', {
-              dependencies: ['raycaster'],
-                init: function () {
-                    this.el.addEventListener('raycaster-intersection', function () {
-                        console.log('Player hit something!');
-                    });
-                }
-            });
+            // AFRAME.registerComponent('magic-laser', {
+            //   dependencies: ['raycaster'],
+            //     init: function () {
+            //         this.el.addEventListener('raycaster-intersection', function () {
+            //             console.log('Player hit something!');
+            //         });
+            //     }
+            // });
 
             AFRAME.registerComponent('magic-target', {
                 // is the dependencies needed here or not?
@@ -159,9 +302,9 @@
 
         <!-- wasd user -->
         <a-entity id="camera-wrapper">
-            <a-camera look-controls="pointerLockEnabled: true" near="0.001" wasd-controls>
+            <a-camera id="camera-actual" look-controls="pointerLockEnabled: true" near="0.001" wasd-controls>
                 <a-cylinder id="laser-pointer" position="0.2 -0.4 -0.9" radius="0.01" height= "1.0" rotation="90 0 0" color="beige" opacity="1.0"></a-cylinder>
-                <a-entity position="0.2 -0.4 -1.4" cursor="rayOrigin: entity; showLine: true;" raycaster="objects: .clickable; showLine: true; far: 16" line="color: white; opacity:0.5"></a-entity>
+                <a-entity id="laser-ray" position="0.2 -0.4 -1.4" cursor="rayOrigin: entity; showLine: true;" raycaster="objects: .clickable; showLine: true; far: 16" line="color: white; opacity:0.5"></a-entity>
             </a-camera>
         </a-entity>
 
@@ -209,6 +352,25 @@
         </a-entity>
         <a-entity class="collidable" geometry="primitive: box" position="1 0 0"></a-entity> -->
     </a-scene>
+
+    <span id="analog"></span>
+    <button id="clicker"><h2>This is a CLICK BUTTON</h2></button>
+    <style type="text/css">
+        .clicker {
+            display: inline-block;
+            width: 200px,
+            height: 200px;
+            background-color: green;
+            border: 1px solid black;
+        }
+    </style>
+    <script type="text/javascript">
+        const raycaster = document.querySelector("#laser-ray")
+        document.querySelector("#clicker").onclick = function() {
+            console.log('yo', raycaster)
+            raycaster.click();
+        }
+    </script>
 
     <!-- TODO: do the API stuff outside forms  -->
     <h2>Create Entry:</h2>
